@@ -11,6 +11,7 @@ from win32gui import FindWindow, SendMessage
 from PyQt5.QtCore import QUrl, Qt, QObject, pyqtSignal, QThread
 from PyQt5.QtWebEngineWidgets import QWebEnginePage, QWebEngineProfile, QWebEngineView
 from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtGui import QIcon
 
 from loguru import logger
 from key_codes import KEY_MAP
@@ -31,6 +32,7 @@ class FlyffClient(QWidget):
     def __init__(self, profile_name, *args, **kwargs):
         super(FlyffClient, self).__init__(*args, **kwargs)
         self.setWindowTitle("ezFlyff")
+        self.setWindowIcon(QIcon(f"{ezflyff_dir}\\flyff.ico"))
         self.url = "https://universe.flyff.com/play"
         self.profile_name = profile_name
         self.profile_settings = get_profile_settings(self.profile_name)
@@ -313,6 +315,7 @@ profiles = ['main', 'fullsupport']
 
 app = QApplication(sys.argv)
 app.setApplicationName("ezFlyff")
+app.setWindowIcon(QIcon(f"{ezflyff_dir}\\flyff.ico"))
 
 for profile in profiles:
     create_settings_dir(profile)
