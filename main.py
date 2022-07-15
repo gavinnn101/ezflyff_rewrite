@@ -31,7 +31,6 @@ class FlyffClient(QWidget):
         super(FlyffClient, self).__init__(*args, **kwargs)
         self.setWindowTitle("ezFlyff")
         self.url = "https://universe.flyff.com/play"
-        self.ezflyff_dir = "C:\\Users\\Gavin\\Desktop\\ezflyff"
         self.profile_name = profile_name
         self.profile_settings = get_profile_settings(self.profile_name)
         # Create game window and keep reference open so it doesn't close
@@ -106,8 +105,8 @@ class FlyffClient(QWidget):
         profile.setHttpUserAgent(
             "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"
         )
-        profile.setCachePath(f"{self.ezflyff_dir}\\profiles\\{self.profile_name}\\cache")
-        profile.setPersistentStoragePath(f"{self.ezflyff_dir}\\profiles\\{self.profile_name}")
+        profile.setCachePath(f"{ezflyff_dir}\\profiles\\{self.profile_name}\\cache")
+        profile.setPersistentStoragePath(f"{ezflyff_dir}\\profiles\\{self.profile_name}")
         page = QWebEnginePage(profile, browser)
 
         browser.setPage(page)
