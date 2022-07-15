@@ -2,6 +2,7 @@ import configparser
 import os
 import random
 import sys
+import threading
 import time
 import win32api
 import win32con
@@ -33,6 +34,9 @@ class FlyffClient(QWidget):
         self.ezflyff_dir = "C:\\Users\\Gavin\\Desktop\\ezflyff"
         self.profile_name = profile_name
         self.profile_settings = get_profile_settings(self.profile_name)
+        self.browsers = []
+        browser = self.create_new_window()
+        self.browsers.append(browser)
 
         # Initialize toggle listener for Auto Assist
         self.toggle_listener_thread = QThread()
@@ -43,7 +47,6 @@ class FlyffClient(QWidget):
         # Start the toggle listener thread
         self.toggle_listener_thread.started.connect(self.toggle_listener.toggle_key_listener)
         self.toggle_listener_thread.start()
-
 
     def on_toggle_key_pressed(self, key_state):
         logger.debug("on_toggle_key_pressed called")
@@ -67,7 +70,6 @@ class FlyffClient(QWidget):
             logger.debug('Stopping Auto Assist thread')
             self.auto_assist_stop_signal.emit()
 
-
     def closeEvent(self, event):
         logger.info("closeEvent called")
         self.toggle_listener.stop()
@@ -80,12 +82,11 @@ class FlyffClient(QWidget):
         self.auto_assist_thread.terminate()
         event.accept()
 
-
-    def create_new_window(self, profile_name):
+    def create_new_window(self):
         logger.info("create_new_window called")
         browser = QWebEngineView()
         browser.setAttribute(Qt.WA_DeleteOnClose)
-        browser.setWindowTitle(f"ezFlyff - {profile_name}")
+        browser.setWindowTitle(f"ezFlyff - {self.profile_name}")
 
         # Apply user settings from profile_settings.ini
         width_setting = int(self.profile_settings["window"]["window_width"])
@@ -100,12 +101,12 @@ class FlyffClient(QWidget):
         browser.resize(width_setting, height_setting)
         browser.move(x_setting, y_setting)
 
-        profile = QWebEngineProfile(profile_name, browser)
+        profile = QWebEngineProfile(self.profile_name, browser)
         profile.setHttpUserAgent(
             "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"
         )
-        profile.setCachePath(f"{self.ezflyff_dir}\\profiles\\{profile_name}\\cache")
-        profile.setPersistentStoragePath(f"{self.ezflyff_dir}\\profiles\\{profile_name}")
+        profile.setCachePath(f"{self.ezflyff_dir}\\profiles\\{self.profile_name}\\cache")
+        profile.setPersistentStoragePath(f"{self.ezflyff_dir}\\profiles\\{self.profile_name}")
         page = QWebEnginePage(profile, browser)
 
         browser.setPage(page)
@@ -186,7 +187,6 @@ class ToggleListener(QObject):
         self.toggle_key = self.profile_settings["assist"]["toggle_key"]
         self.toggle_state = False
 
-
     def toggle_key_listener(self):
         """Toggles key listener."""
         logger.debug(f"Toggle key listener started for profile {self.profile_name}")
@@ -208,6 +208,9 @@ class ToggleListener(QObject):
                     self.toggle_signal.emit(self.toggle_state)
                     time.sleep(2)
 
+############################
+# Create and load settings #
+############################
 
 def create_settings_dir(profile_name):
     """Creates the profile directory and subdirectories if they don't exist."""
@@ -279,7 +282,6 @@ def get_game_handle(profile_name):
 #################
 
 clients = []
-game_windows = []
 profiles = ['main', 'fullsupport']
 
 app = QApplication(sys.argv)
@@ -288,11 +290,8 @@ app.setApplicationName("ezFlyff")
 for profile in profiles:
     create_settings_dir(profile)
     client = FlyffClient(profile)
-    window = client.create_new_window(client.profile_name)
-
     # Keep reference open so windows don't close.
     clients.append(client)
-    game_windows.append(window)
 
 
 sys.exit(app.exec_())
