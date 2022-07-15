@@ -107,7 +107,7 @@ class FlyffClient(QWidget):
             "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"
         )
         profile.setCachePath(f"{ezflyff_dir}\\profiles\\{self.profile_name}\\cache")
-        profile.setPersistentStoragePath(f"{ezflyff_dir}\\profiles\\{self.profile_name}")
+        profile.setPersistentStoragePath(f"{ezflyff_dir}\\profiles\\{self.profile_name}\\storage")
         page = QWebEnginePage(profile, browser)
 
         browser.setPage(page)
