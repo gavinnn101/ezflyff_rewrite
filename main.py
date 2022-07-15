@@ -126,10 +126,15 @@ class AutoAssist(QObject):
         super(AutoAssist, self).__init__(*args, **kwargs)
         self.profile_name = profile_name
         self.profile_settings = profile_settings
+        # Heal / primary ability settings
         self.heal_hotkey = self.profile_settings["assist"]["heal_hotkey"]
         self.heal_interval = int(self.profile_settings["assist"]["heal_interval"])
+        # Buff / Extra ability settings
         self.buff_hotkey = self.profile_settings["assist"]["buff_hotkey"]
         self.buff_interval = int(self.profile_settings["assist"]["buff_interval"])
+        # Potion settings
+        self.potion_hotkey = self.profile_settings["assist"]["potion_hotkey"]
+        self.potion_interval = int(self.profile_settings["assist"]["potion_interval"])
 
         self.game_handle = get_game_handle(self.profile_name)
         self.running = False
@@ -142,7 +147,7 @@ class AutoAssist(QObject):
         """Gets key map for hotkey, presses the hotkey, and waits a randomized fraction of a second."""
         hotkey = KEY_MAP[hotkey]
         SendMessage(handle, win32con.WM_KEYDOWN, hotkey, 0)
-        time.sleep(random.uniform(0.05, 0.2))  # Keep sleep low because it seems to block real key presses
+        time.sleep(random.uniform(0.02, 0.08))  # Keep sleep low because it seems to block real key presses
         SendMessage(handle, win32con.WM_KEYUP, hotkey, 0)
      
     def assist_loop(self):
@@ -164,14 +169,29 @@ class AutoAssist(QObject):
             # self.press_key(self.game_handle, self.heal_hotkey)
             multithreading(partial(self.press_key, self.game_handle, self.heal_hotkey))
 
+        def drink_potion(self):
+            """Presses hotkey to drink a potion."""
+            logger.info(f"Drinking potion on {self.profile_name}")
+            multithreading(partial(self.press_key, self.game_handle, self.potion_hotkey))
+            potion_timer = time.perf_counter()  # Reset potion timer
+            return potion_timer
+
+    
         self.running = True
         logger.info(f"Auto Assist is running on profile {self.profile_name}")
+        # Initial buff and initialize timers
         buff_timer = buff_character(self)
+        potion_timer = time.perf_counter()
         while self.running:
             heal_character(self)
+            # Check if we need to re-buff
             buff_timer_check = time.perf_counter()
-            if buff_timer_check - buff_timer > self.buff_interval:
+            if buff_timer_check - buff_timer >= self.buff_interval:
                 buff_timer = buff_character(self)
+            # Check if we need to drink a potion
+            potion_timer_check = time.perf_counter()
+            if potion_timer_check - potion_timer >= self.potion_interval:
+                potion_timer = drink_potion(self)
         self.finished.emit()
 
 
@@ -186,7 +206,6 @@ class ToggleListener(QObject):
         super(ToggleListener, self).__init__(*args, **kwargs)
         self.profile_name = profile_name
         self.profile_settings = profile_settings
-        logger.debug(type(self.profile_settings))
         self.toggle_key = self.profile_settings["assist"]["toggle_key"]
         self.toggle_state = False
 
@@ -247,6 +266,8 @@ def get_profile_settings(profile_name):
         config.set("assist", "heal_interval", "2")
         config.set("assist", "buff_hotkey", "4")
         config.set("assist", "buff_interval", "300")
+        config.set("assist", "potion_hotkey", "2")
+        config.set("assist", "potion_interval", "15")
         with open(settings_path, "w") as config_file:
             config.write(config_file)
     config.read(settings_path)
