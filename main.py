@@ -34,6 +34,7 @@ class FlyffClient(QWidget):
         self.ezflyff_dir = "C:\\Users\\Gavin\\Desktop\\ezflyff"
         self.profile_name = profile_name
         self.profile_settings = get_profile_settings(self.profile_name)
+        # Create game window and keep reference open so it doesn't close
         self.browsers = []
         browser = self.create_new_window()
         self.browsers.append(browser)
@@ -289,8 +290,8 @@ app.setApplicationName("ezFlyff")
 
 for profile in profiles:
     create_settings_dir(profile)
+    # Create Flyff client(QObject/window) and keep reference open so it doesn't close
     client = FlyffClient(profile)
-    # Keep reference open so windows don't close.
     clients.append(client)
 
 
