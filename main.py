@@ -6,6 +6,7 @@ import threading
 import time
 import win32api
 import win32con
+from functools import partial
 from win32gui import FindWindow, SendMessage
 from PyQt5.QtCore import QUrl, Qt, QObject, pyqtSignal, QThread
 from PyQt5.QtWebEngineWidgets import QWebEnginePage, QWebEngineProfile, QWebEngineView
@@ -141,14 +142,15 @@ class AutoAssist(QObject):
         """Gets key map for hotkey, presses the hotkey, and waits a randomized fraction of a second."""
         hotkey = KEY_MAP[hotkey]
         SendMessage(handle, win32con.WM_KEYDOWN, hotkey, 0)
-        time.sleep(0.5 + random.random())
+        time.sleep(random.uniform(0.05, 0.2))  # Keep sleep low because it seems to block real key presses
         SendMessage(handle, win32con.WM_KEYUP, hotkey, 0)
      
     def assist_loop(self):
         def buff_character(self):
             """Presses the buff hotkey and waits for the buff interval."""
             logger.info(f"pressing buff hotkey {self.buff_hotkey} on {self.profile_name}")
-            self.press_key(self.game_handle, self.buff_hotkey)
+            # self.press_key(self.game_handle, self.buff_hotkey)
+            multithreading(partial(self.press_key, self.game_handle, self.buff_hotkey))
             logger.info("Sleeping 5 seconds while character buffs")
             time.sleep(5 + random.random())  # To make sure buffs arent interrupted by a heal
             buff_timer = time.perf_counter()  # Reset buff timer
@@ -159,7 +161,8 @@ class AutoAssist(QObject):
             logger.info(f"Sleeping {self.heal_interval} seconds...")
             time.sleep(self.heal_interval + random.random())
             logger.info(f"pressing heal hotkey {self.heal_hotkey} on {self.profile_name}.")
-            self.press_key(self.game_handle, self.heal_hotkey)
+            # self.press_key(self.game_handle, self.heal_hotkey)
+            multithreading(partial(self.press_key, self.game_handle, self.heal_hotkey))
 
         self.running = True
         logger.info(f"Auto Assist is running on profile {self.profile_name}")
@@ -276,6 +279,9 @@ def get_game_handle(profile_name):
     game_window_class = "Qt5152QWindowIcon"
     return FindWindow(game_window_class, game_window_name)
 
+
+def multithreading(function):
+    threading.Thread(target=function).start()
 
 #################
 # Main
